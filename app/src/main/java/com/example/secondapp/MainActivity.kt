@@ -41,13 +41,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun incIndex(){
-            currentIndex = (currentIndex + 1) % questionBank.size
+            if(currentIndex == questionBank.size - 1)
+            {
+                //do nothing
+            }
+            else {
+                currentIndex = (currentIndex + 1) % questionBank.size
+            }
             buildTextView()
         }
 
         fun decIndex(){
             if (currentIndex == 0){
-                currentIndex = questionBank.size - 1
+                //do nothing
             }
             else {
                 currentIndex = (currentIndex - 1) % questionBank.size
@@ -89,6 +95,10 @@ class MainActivity : AppCompatActivity() {
 
         val questionTextResId = questionBank[currentIndex].textResId
         questionTextView.setText(questionTextResId)
+
+        questionTextView.setOnClickListener{
+            incIndex()
+        }
 
         nextButton.setOnClickListener{
             incIndex()
