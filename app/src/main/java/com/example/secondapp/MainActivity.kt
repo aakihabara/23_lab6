@@ -2,12 +2,14 @@ package com.example.secondapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import java.security.KeyStore.TrustedCertificateEntry
 
-
+private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,41 +27,91 @@ class MainActivity : AppCompatActivity() {
         Questions(R.string.question_america, true)
     )
 
+    private val isAnswered = IntArray(questionBank.size)
+
+    private val correctAnswer = BooleanArray(questionBank.size)
+
     private var currentIndex = 0
+
+    private fun toastMessage(text: String){
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun checkOnAvaliableButtons(){
+        if(checkOnAnswered()){
+            true_button.isEnabled = false
+            false_button.isEnabled = false
+        }
+        else {
+            true_button.isEnabled = true
+            false_button.isEnabled = true
+        }
+    }
+
+    private fun checkOnAnswered() : Boolean{
+        return isAnswered[currentIndex] == 1
+    }
+
+    private fun checkIfFinish(){
+        var finishing = true
+        for(i in isAnswered) {
+            if (i == 0) {
+                finishing = false
+            }
+        }
+
+        if(finishing){
+            var count = 0
+
+            for(i in correctAnswer){
+                if(i){
+                    count++
+                }
+            }
+
+            var result = count * 100 / questionBank.size
+
+            Toast.makeText(this, "$result% correct answers", Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
+    private fun buildTextView(){
+        val questionTextResId = questionBank[currentIndex].textResId
+        questionTextView.setText(questionTextResId)
+    }
+
+    private fun incIndex(){
+        if(currentIndex == questionBank.size - 1)
+        {
+            //do nothing
+        }
+        else {
+            currentIndex = (currentIndex + 1) % questionBank.size
+        }
+
+        checkOnAvaliableButtons()
+
+        buildTextView()
+    }
+
+    private fun decIndex(){
+        if (currentIndex == 0){
+            //do nothing
+        }
+        else {
+            currentIndex = (currentIndex - 1) % questionBank.size
+        }
+
+        checkOnAvaliableButtons()
+
+        buildTextView()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
-
-        fun toastMessage(text: String){
-            Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
-        }
-
-        fun buildTextView(){
-            val questionTextResId = questionBank[currentIndex].textResId
-            questionTextView.setText(questionTextResId)
-        }
-
-        fun incIndex(){
-            if(currentIndex == questionBank.size - 1)
-            {
-                //do nothing
-            }
-            else {
-                currentIndex = (currentIndex + 1) % questionBank.size
-            }
-            buildTextView()
-        }
-
-        fun decIndex(){
-            if (currentIndex == 0){
-                //do nothing
-            }
-            else {
-                currentIndex = (currentIndex - 1) % questionBank.size
-            }
-            buildTextView()
-        }
 
         true_button = findViewById(R.id.true_button)
         false_button = findViewById(R.id.false_button)
@@ -71,12 +123,18 @@ class MainActivity : AppCompatActivity() {
 
             if(questionBank[currentIndex].answer){
                 toastMessage("Correct")
+                correctAnswer[currentIndex] = true
             }
             else {
                 toastMessage("Incorrect")
+                correctAnswer[currentIndex] = false
             }
 
-            incIndex()
+            isAnswered[currentIndex] = 1
+
+            checkOnAvaliableButtons()
+
+            checkIfFinish()
 
         }
 
@@ -84,12 +142,20 @@ class MainActivity : AppCompatActivity() {
 
             if(!questionBank[currentIndex].answer){
                 toastMessage("Correct")
+                correctAnswer[currentIndex] = true
             }
             else {
                 toastMessage("Incorrect")
+                correctAnswer[currentIndex] = false
             }
 
-            incIndex()
+
+
+            isAnswered[currentIndex] = 1
+
+            checkOnAvaliableButtons()
+
+            checkIfFinish()
 
         }
 
@@ -98,6 +164,7 @@ class MainActivity : AppCompatActivity() {
 
         questionTextView.setOnClickListener{
             incIndex()
+
         }
 
         nextButton.setOnClickListener{
@@ -107,5 +174,30 @@ class MainActivity : AppCompatActivity() {
         prevButton.setOnClickListener{
             decIndex()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart(Bundle?) called")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume(Bundle?) called")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause(Bundle?) called")
+    }
+
+    override fun onStop(){
+        super.onStop()
+        Log.d(TAG, "onStop(Bundle?) called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy(Bundle?) called")
     }
 }
