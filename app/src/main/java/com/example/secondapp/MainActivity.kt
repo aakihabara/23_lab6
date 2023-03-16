@@ -7,9 +7,12 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import java.security.KeyStore.TrustedCertificateEntry
 
 private const val TAG = "MainActivity"
+private const val KEY_INDEX = "index"
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,23 +22,38 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prevButton: ImageButton
     private lateinit var questionTextView: TextView
 
-    private val questionBank = listOf(Questions(R.string.question_australia, true),
-        Questions(R.string.question_oceans, true),
-        Questions(R.string.question_mideast, false),
-        Questions(R.string.question_africa, false),
-        Questions(R.string.question_asia, true),
-        Questions(R.string.question_america, true)
-    )
-
-    private val isAnswered = IntArray(questionBank.size)
-
-    private val correctAnswer = BooleanArray(questionBank.size)
-
-    private var currentIndex = 0
+    private val quizViewModel: QuizViewModel by lazy {
+        ViewModelProviders.of(this).get(QuizViewModel::class.java)
+    }
 
     private fun toastMessage(text: String){
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
+
+    private fun checkIfFinish(){
+        var finishing = true
+        for(i in quizViewModel.isAnswered) {
+            if (i == 0) {
+                finishing = false
+            }
+        }
+
+        if(finishing){
+            var count = 0
+
+            for(i in quizViewModel.correctAnswer){
+                if(i){
+                    count++
+                }
+            }
+
+            var result = count * 100 / quizViewModel.currentQuestionSize
+
+            Toast.makeText(this, "$result% correct answers", Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
 
     private fun checkOnAvaliableButtons(){
         if(checkOnAnswered()){
@@ -48,64 +66,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkOnAnswered() : Boolean{
-        return isAnswered[currentIndex] == 1
-    }
-
-    private fun checkIfFinish(){
-        var finishing = true
-        for(i in isAnswered) {
-            if (i == 0) {
-                finishing = false
-            }
-        }
-
-        if(finishing){
-            var count = 0
-
-            for(i in correctAnswer){
-                if(i){
-                    count++
-                }
-            }
-
-            var result = count * 100 / questionBank.size
-
-            Toast.makeText(this, "$result% correct answers", Toast.LENGTH_SHORT).show()
-        }
-
-    }
-
     private fun buildTextView(){
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
     }
 
-    private fun incIndex(){
-        if(currentIndex == questionBank.size - 1)
-        {
-            //do nothing
-        }
-        else {
-            currentIndex = (currentIndex + 1) % questionBank.size
-        }
-
-        checkOnAvaliableButtons()
-
-        buildTextView()
+    private fun checkOnAnswered() : Boolean{
+        return quizViewModel.isAnswered[quizViewModel.currentIndex] == 1
     }
 
-    private fun decIndex(){
-        if (currentIndex == 0){
-            //do nothing
+    private fun checkOnNPButtons(){
+        when (quizViewModel.currentIndex) {
+            0 -> {
+                nextButton.isEnabled = true
+                questionTextView.isClickable = true
+                prevButton.isEnabled = false
+            }
+            (quizViewModel.currentQuestionSize - 1) -> {
+                nextButton.isEnabled = false
+                questionTextView.isClickable = false
+                prevButton.isEnabled = true
+            }
+            else -> {
+                nextButton.isEnabled = true
+                questionTextView.isClickable = true
+                prevButton.isEnabled = true
+            }
         }
-        else {
-            currentIndex = (currentIndex - 1) % questionBank.size
-        }
-
-        checkOnAvaliableButtons()
-
-        buildTextView()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,45 +100,48 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
 
+        val currentIndex = savedInstanceState?.getInt(KEY_INDEX, 0) ?: 0
+        quizViewModel.currentIndex = currentIndex
+
         true_button = findViewById(R.id.true_button)
         false_button = findViewById(R.id.false_button)
         prevButton = findViewById(R.id.prev_button)
         nextButton = findViewById(R.id.next_button)
         questionTextView = findViewById(R.id.question_text_view)
 
+        checkOnAvaliableButtons()
+        checkOnNPButtons()
+
         true_button.setOnClickListener{
 
-            if(questionBank[currentIndex].answer){
+            if(quizViewModel.currentQuestionAnswer){
                 toastMessage("Correct")
-                correctAnswer[currentIndex] = true
+                quizViewModel.correctAnswer[quizViewModel.currentIndex] = true
             }
             else {
                 toastMessage("Incorrect")
-                correctAnswer[currentIndex] = false
+                quizViewModel.correctAnswer[quizViewModel.currentIndex] = false
             }
 
-            isAnswered[currentIndex] = 1
+            quizViewModel.isAnswered[quizViewModel.currentIndex] = 1
 
             checkOnAvaliableButtons()
 
             checkIfFinish()
-
         }
 
         false_button.setOnClickListener{
 
-            if(!questionBank[currentIndex].answer){
+            if(!quizViewModel.currentQuestionAnswer){
                 toastMessage("Correct")
-                correctAnswer[currentIndex] = true
+                quizViewModel.correctAnswer[quizViewModel.currentIndex] = true
             }
             else {
                 toastMessage("Incorrect")
-                correctAnswer[currentIndex] = false
+                quizViewModel.correctAnswer[quizViewModel.currentIndex] = false
             }
 
-
-
-            isAnswered[currentIndex] = 1
+            quizViewModel.isAnswered[quizViewModel.currentIndex] = 1
 
             checkOnAvaliableButtons()
 
@@ -159,20 +149,28 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
 
         questionTextView.setOnClickListener{
-            incIndex()
-
+            quizViewModel.moveToNext()
+            checkOnAvaliableButtons()
+            buildTextView()
+            checkOnNPButtons()
         }
 
         nextButton.setOnClickListener{
-            incIndex()
+            quizViewModel.moveToNext()
+            checkOnAvaliableButtons()
+            buildTextView()
+            checkOnNPButtons()
         }
 
         prevButton.setOnClickListener{
-            decIndex()
+            quizViewModel.moveToPrev()
+            checkOnAvaliableButtons()
+            buildTextView()
+            checkOnNPButtons()
         }
     }
 
@@ -189,6 +187,12 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         Log.d(TAG, "onPause(Bundle?) called")
+    }
+
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        super.onSaveInstanceState(savedInstanceState)
+        Log.i(TAG, "onSaveInstanceState")
+        savedInstanceState.putInt(KEY_INDEX, quizViewModel.currentIndex)
     }
 
     override fun onStop(){
