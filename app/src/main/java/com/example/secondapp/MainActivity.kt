@@ -1,5 +1,7 @@
 package com.example.secondapp
 
+import android.app.Activity
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -13,6 +15,7 @@ import java.security.KeyStore.TrustedCertificateEntry
 
 private const val TAG = "MainActivity"
 private const val KEY_INDEX = "index"
+private const val REQUEST_CODE_CHEAT = 0
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,6 +24,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var nextButton: ImageButton
     private lateinit var prevButton: ImageButton
     private lateinit var questionTextView: TextView
+    private lateinit var cheatButton: Button
+
+    private var userAnswer = false;
 
     private val quizViewModel: QuizViewModel by lazy {
         ViewModelProviders.of(this).get(QuizViewModel::class.java)
@@ -78,9 +84,7 @@ class MainActivity : AppCompatActivity() {
     private fun checkOnNPButtons(){
         when (quizViewModel.currentIndex) {
             0 -> {
-                nextButton.isEnabled = true
-                questionTextView.isClickable = true
-                prevButton.isEnabled = false
+
             }
             (quizViewModel.currentQuestionSize - 1) -> {
                 nextButton.isEnabled = false
@@ -93,6 +97,17 @@ class MainActivity : AppCompatActivity() {
                 prevButton.isEnabled = true
             }
         }
+    }
+
+    private fun checkAnswer(userAnswer: Boolean){
+        val correctAnswer: Boolean = quizViewModel.currentQuestionAnswer
+
+        val messageResId = when {
+            quizViewModel.isCheated[quizViewModel.currentIndex] -> R.string.judgment_toast
+            userAnswer == correctAnswer -> R.string.correct_toast
+            else -> R.string.incorrect_toast
+        }
+        Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,20 +123,16 @@ class MainActivity : AppCompatActivity() {
         prevButton = findViewById(R.id.prev_button)
         nextButton = findViewById(R.id.next_button)
         questionTextView = findViewById(R.id.question_text_view)
+        cheatButton = findViewById(R.id.cheat_button)
 
         checkOnAvaliableButtons()
         checkOnNPButtons()
 
         true_button.setOnClickListener{
 
-            if(quizViewModel.currentQuestionAnswer){
-                toastMessage("Correct")
-                quizViewModel.correctAnswer[quizViewModel.currentIndex] = true
-            }
-            else {
-                toastMessage("Incorrect")
-                quizViewModel.correctAnswer[quizViewModel.currentIndex] = false
-            }
+            checkAnswer(true)
+
+            quizViewModel.correctAnswer[quizViewModel.currentIndex] = quizViewModel.currentQuestionAnswer
 
             quizViewModel.isAnswered[quizViewModel.currentIndex] = 1
 
@@ -132,14 +143,9 @@ class MainActivity : AppCompatActivity() {
 
         false_button.setOnClickListener{
 
-            if(!quizViewModel.currentQuestionAnswer){
-                toastMessage("Correct")
-                quizViewModel.correctAnswer[quizViewModel.currentIndex] = true
-            }
-            else {
-                toastMessage("Incorrect")
-                quizViewModel.correctAnswer[quizViewModel.currentIndex] = false
-            }
+            checkAnswer(false)
+
+            quizViewModel.correctAnswer[quizViewModel.currentIndex] = !quizViewModel.currentQuestionAnswer
 
             quizViewModel.isAnswered[quizViewModel.currentIndex] = 1
 
@@ -147,6 +153,12 @@ class MainActivity : AppCompatActivity() {
 
             checkIfFinish()
 
+        }
+
+        cheatButton.setOnClickListener {
+            val answerIsTrue = quizViewModel.currentQuestionAnswer
+            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
+            startActivityForResult(intent, REQUEST_CODE_CHEAT)
         }
 
         val questionTextResId = quizViewModel.currentQuestionText
@@ -203,5 +215,20 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy(Bundle?) called")
+    }
+
+    override fun onActivityResult(requestCode: Int,
+                                  resultCode: Int,
+                                  data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if(resultCode != Activity.RESULT_OK){
+            return
+        }
+
+        if(requestCode == REQUEST_CODE_CHEAT){
+            quizViewModel.isCheated[quizViewModel.currentIndex] =
+                data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
+        }
     }
 }

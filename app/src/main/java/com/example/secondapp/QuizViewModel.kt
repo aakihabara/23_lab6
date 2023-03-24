@@ -16,6 +16,8 @@ class QuizViewModel : ViewModel(){
 
     val isAnswered = IntArray(questionBank.size)
 
+    val isCheated = BooleanArray(questionBank.size)
+
     val correctAnswer = BooleanArray(questionBank.size)
 
     val currentQuestionAnswer: Boolean
