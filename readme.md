@@ -6,7 +6,7 @@
 <br><br><br><br><br><br>
 <p align = "center">Институт естественных наук и техносферной безопасности<br>Кафедра информатики<br>Коньков Никита Алексеевич</p>
 <br><br><br>
-<p align = "center">Лабораторная работа №3<br><strong>«Жизненный цикл activity».</strong><br>01.03.02 Прикладная математика и информатика</p>
+<p align = "center">Лабораторная работа №6<br><strong>«Версии Android SDK и совместимость».</strong><br>01.03.02 Прикладная математика и информатика</p>
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <p align = "right">Научный руководитель<br>
 Соболев Евгений Игоревич</p>
@@ -21,220 +21,171 @@
 
 <br>
 <h1 align = "center">Цели и задачи</h1>
-<p>1. <b>Предотвращение ввода нескольких ответов. </b> После того как пользователь введет ответ на вопрос, заблокируйте кнопки этого вопроса, чтобы предотвратить возможность ввода нескольких ответов.</p>
-<p>2. <b>Вывод оценки.</b> После того как пользователь введет ответ на все вопросы, отобразите уведомление с процентом правильных ответов. </p>
+<p>1. <b> Упражнение. Вывод версии Android на устройстве. </b> Добавьте в макет GeoQuiz виджет TextView для вывода уровня API устройства, на котором работает программа. Результат упражнения Задать текст TextView в макете не получится, потому что версия операционной системы устройства не известна до момента выполнения. Найдите функцию TextView для задания текста в справочной странице TextView в документации Android. Вам нужна функция, получающая один аргумент — строку (или CharSequence). Для настройки размера и гарнитуры текста используйте атрибуты XML, перечисленные в описании TextView. </p>
+<p>2. <b> Упражнение. Ограничение подсказок.  </b> Ограничьте пользователя тремя подсказками. Храните информацию о том, сколько раз пользователь подсматривал ответ, и выводите количество оставшихся подсказок под кнопкой. Если ни одной подсказки не осталось, то кнопка получения подсказки блокируется. </p>
 
-<h1 align = "center">Решение</h2>
+<p><a href="https://www.codewars.com/kata/59377c53e66267c8f6000027">3. Alphabet war</a></p>
+<p><a href="https://www.codewars.com/kata/63b84f54693cb10065687ae5">4. The 'spiraling' box</a></p>
+<p><a href="https://www.codewars.com/kata/566fc12495810954b1000030">5. Count the Digit</a></p>
+<p><a href="https://www.codewars.com/kata/5b180e9fedaa564a7000009a">6. Fix string case</a></p>
+<p><a href="https://www.codewars.com/kata/55caef80d691f65cb6000040">7. Geometric Progression Sequence</a></p>
+<p><a href="https://www.codewars.com/kata/55fd2d567d94ac3bc9000064">8. Sum of odd numbers</a></p>
 
-<p>Изменения были произведены только в файле MainActivity.kt</p>
+<h1 align = "center">Решение</h1>
 
-<h2 align = "center">MainActivity.kt</h2>
+<p>В файл Main Activity я добавил:</p>
 
-```kt
-package com.example.secondapp
+```Kotlin
+apiView.setText("API level " + android.os.Build.VERSION.SDK_INT.toString())
+```
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.util.Log
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
-import java.security.KeyStore.TrustedCertificateEntry
+<p>Благодаря этой строке я в поле apiView выводу информацию о текущей версии API</p>
 
-private const val TAG = "MainActivity"
+<p>Также для ограничения подсказок я добавил функцию, которая проверяет, на сколько вопросов пользователь уже получил ответ с помощью CheatActivity</p>
 
-class MainActivity : AppCompatActivity() {
+```Kotlin
+    private fun checkCheatTries(){
 
-    private lateinit var true_button: Button
-    private lateinit var false_button:Button
-    private lateinit var nextButton: ImageButton
-    private lateinit var prevButton: ImageButton
-    private lateinit var questionTextView: TextView
+        var counting = 0
 
-    private val questionBank = listOf(Questions(R.string.question_australia, true),
-        Questions(R.string.question_oceans, true),
-        Questions(R.string.question_mideast, false),
-        Questions(R.string.question_africa, false),
-        Questions(R.string.question_asia, true),
-        Questions(R.string.question_america, true)
-    )
-
-    private val isAnswered = IntArray(questionBank.size)
-
-    private val correctAnswer = BooleanArray(questionBank.size)
-
-    private var currentIndex = 0
-
-    private fun toastMessage(text: String){
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun checkOnAvaliableButtons(){
-        if(checkOnAnswered()){
-            true_button.isEnabled = false
-            false_button.isEnabled = false
-        }
-        else {
-            true_button.isEnabled = true
-            false_button.isEnabled = true
-        }
-    }
-
-    private fun checkOnAnswered() : Boolean{
-        return isAnswered[currentIndex] == 1
-    }
-
-    private fun checkIfFinish(){
-        var finishing = true
-        for(i in isAnswered) {
-            if (i == 0) {
-                finishing = false
+        for (i in quizViewModel.isCheated){
+            if(i){
+                counting++
             }
         }
 
-        if(finishing){
-            var count = 0
-
-            for(i in correctAnswer){
-                if(i){
-                    count++
-                }
-            }
-
-            var result = count * 100 / questionBank.size
-
-            Toast.makeText(this, "$result% correct answers", Toast.LENGTH_SHORT).show()
+        if(quizViewModel.allTries - counting <= 0){
+            cheatButton.isEnabled = false
         }
 
     }
+```
 
-    private fun buildTextView(){
-        val questionTextResId = questionBank[currentIndex].textResId
-        questionTextView.setText(questionTextResId)
-    }
+<h2 align = "center">Codewars</h2>
 
-    private fun incIndex(){
-        if(currentIndex == questionBank.size - 1)
-        {
-            //do nothing
-        }
-        else {
-            currentIndex = (currentIndex + 1) % questionBank.size
-        }
+<h2 align = "center"><a href="https://www.codewars.com/users/akihabara">Аккаунт на codewars</a></h2>
 
-        checkOnAvaliableButtons()
+<h2 align = "center">Alphabet war</h2>
 
-        buildTextView()
-    }
-
-    private fun decIndex(){
-        if (currentIndex == 0){
-            //do nothing
-        }
-        else {
-            currentIndex = (currentIndex - 1) % questionBank.size
-        }
-
-        checkOnAvaliableButtons()
-
-        buildTextView()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate(Bundle?) called")
-        setContentView(R.layout.activity_main)
-
-        true_button = findViewById(R.id.true_button)
-        false_button = findViewById(R.id.false_button)
-        prevButton = findViewById(R.id.prev_button)
-        nextButton = findViewById(R.id.next_button)
-        questionTextView = findViewById(R.id.question_text_view)
-
-        true_button.setOnClickListener{
-
-            if(questionBank[currentIndex].answer){
-                toastMessage("Correct")
-                correctAnswer[currentIndex] = true
-            }
-            else {
-                toastMessage("Incorrect")
-                correctAnswer[currentIndex] = false
-            }
-
-            isAnswered[currentIndex] = 1
-
-            checkOnAvaliableButtons()
-
-            checkIfFinish()
-
-        }
-
-        false_button.setOnClickListener{
-
-            if(!questionBank[currentIndex].answer){
-                toastMessage("Correct")
-                correctAnswer[currentIndex] = true
-            }
-            else {
-                toastMessage("Incorrect")
-                correctAnswer[currentIndex] = false
-            }
-
-
-
-            isAnswered[currentIndex] = 1
-
-            checkOnAvaliableButtons()
-
-            checkIfFinish()
-
-        }
-
-        val questionTextResId = questionBank[currentIndex].textResId
-        questionTextView.setText(questionTextResId)
-
-        questionTextView.setOnClickListener{
-            incIndex()
-
-        }
-
-        nextButton.setOnClickListener{
-            incIndex()
-        }
-
-        prevButton.setOnClickListener{
-            decIndex()
+```kotlin
+fun alphabetWar(fight: String): String {
+    var leftSide = 0
+    var rightSide = 0
+    for(i in fight){
+        when(i){
+            'w' -> leftSide += 4
+            'p' -> leftSide += 3
+            'b' -> leftSide += 2
+            's' -> leftSide++
+            'm' -> rightSide += 4
+            'q' -> rightSide += 3
+            'd' -> rightSide += 2
+            'z' -> rightSide++
         }
     }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart(Bundle?) called")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume(Bundle?) called")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause(Bundle?) called")
-    }
-
-    override fun onStop(){
-        super.onStop()
-        Log.d(TAG, "onStop(Bundle?) called")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy(Bundle?) called")
+    
+    if(leftSide > rightSide){
+        return "Left side wins!"
+    } else if (leftSide == rightSide){
+        return "Let's fight again!"
+    } else {
+        return "Right side wins!"
     }
 }
 ```
 
+<h2 align = "center">The 'spiraling' box</h2>
+
+```kotlin
+fun createBox(width: Int, length: Int): Array<IntArray> {
+    val matr = Array(length){ IntArray(width) }
+    var startRow = 0
+    var startCol = 0
+    var endRow = length - 1
+    var endCol = width - 1
+    var num = 1
+    
+    while(startRow <= endRow && startCol <= endCol){
+        
+        for( col in startCol .. endCol){
+            matr[startRow][col] = num
+            matr[endRow][col] = num
+        }
+        startRow++
+        endRow--
+        
+        for(row in startRow..endRow){
+            matr[row][startCol] = num
+            matr[row][endCol] = num
+        }
+        startCol++
+        endCol--
+        
+        num++
+    }
+    
+    return matr
+}
+```
+
+<h2 align = "center">Count the Digit</h2>
+
+```kotlin
+package countdig
+
+fun nbDig(n:Int, d:Int):Int {
+    var res = 0    
+   
+    for (i in 0..n){
+        var temp = i * i
+        while (temp != 0) {
+          if (temp % 10 == d)
+          res++
+          temp /= 10;
+        }        
+    }
+    
+    if (d == 0) {
+        res++
+    }
+    
+    return res
+}
+```
+
+<h2 align = "center">Fix string case</h2>
+
+```kotlin
+object FixStringCase {
+    fun solve(s: String): String = if (s.count { it.isLowerCase() } * 2 >= s.length) s.toLowerCase() else s.toUpperCase()
+}
+```
+
+<h2 align = "center">Geometric Progression Sequence</h2>
+
+```kotlin
+fun geometricSequenceElements(a: Int, r: Int, n: Int): String{
+        var res = ""
+        var num = a
+        for (i in 1 until n) {
+            if (i == 1) res += a.toString()
+            num *= r
+            res += ", " + num.toString()
+        }
+        return res
+}
+```
+
+<h2 align = "center">Sum of odd numbers</h2>
+
+```kotlin
+fun rowSumOddNumbers(n: Int): Int {
+    var res = n * n * n
+    return res
+}
+```
+
+
+
 <h1 align = "center">Вывод</h1>
-<p>Опираясь на собственные знания, а также на материал из лекции, я поработал с массивами данных, создал несколько необходимых для задания функций и выполнил поставленную задачу.</p>
+<p>По итогу проделанной лабораторной работы, я добавил ограничение попыток, научился получать информацию по версии API устройства, прорешал ряд задач на платформе Codewars. </p>
