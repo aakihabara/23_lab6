@@ -14,6 +14,8 @@ class QuizViewModel : ViewModel(){
 
     var currentIndex = 0
 
+    var allTries = 3
+
     val isAnswered = IntArray(questionBank.size)
 
     val isCheated = BooleanArray(questionBank.size)

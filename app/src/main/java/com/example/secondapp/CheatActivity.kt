@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProviders
 
 private const val TAG = "CheatActivity"
 private const val KEY_INDEX = "answer"
@@ -31,6 +32,7 @@ class CheatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_cheat)
 
         shown = savedInstanceState?.getBoolean(KEY_INDEX, false) ?: false
+
         setAnswerShownResult(shown)
 
         answerIsTrue = intent.getBooleanExtra(EXTRA_ANSWER_IS_TRUE, false)
@@ -42,7 +44,7 @@ class CheatActivity : AppCompatActivity() {
                 else -> R.string.false_button
             }
             shown = true
-            answerTextView.setText(answerText)
+            answerTextView.setText(answerText )
             setAnswerShownResult(shown)
         }
     }

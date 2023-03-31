@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prevButton: ImageButton
     private lateinit var questionTextView: TextView
     private lateinit var cheatButton: Button
+    private lateinit var apiView: TextView
 
     private var userAnswer = false;
 
@@ -110,6 +111,27 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
     }
 
+    private fun checkCheatTries(){
+
+        var counting = 0
+
+        for (i in quizViewModel.isCheated){
+            if(i){
+                counting++
+            }
+        }
+
+        if(quizViewModel.allTries - counting <= 0){
+            cheatButton.isEnabled = false
+        }
+
+    }
+
+    private fun checkAll(){
+        checkOnAvaliableButtons()
+        checkCheatTries()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate(Bundle?) called")
@@ -124,9 +146,12 @@ class MainActivity : AppCompatActivity() {
         nextButton = findViewById(R.id.next_button)
         questionTextView = findViewById(R.id.question_text_view)
         cheatButton = findViewById(R.id.cheat_button)
+        apiView = findViewById(R.id.api_string)
 
         checkOnAvaliableButtons()
         checkOnNPButtons()
+        checkAll()
+        apiView.setText("API level " + android.os.Build.VERSION.SDK_INT.toString())
 
         true_button.setOnClickListener{
 
@@ -136,7 +161,7 @@ class MainActivity : AppCompatActivity() {
 
             quizViewModel.isAnswered[quizViewModel.currentIndex] = 1
 
-            checkOnAvaliableButtons()
+            checkAll()
 
             checkIfFinish()
         }
@@ -149,7 +174,7 @@ class MainActivity : AppCompatActivity() {
 
             quizViewModel.isAnswered[quizViewModel.currentIndex] = 1
 
-            checkOnAvaliableButtons()
+            checkAll()
 
             checkIfFinish()
 
@@ -159,6 +184,7 @@ class MainActivity : AppCompatActivity() {
             val answerIsTrue = quizViewModel.currentQuestionAnswer
             val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
             startActivityForResult(intent, REQUEST_CODE_CHEAT)
+            checkAll()
         }
 
         val questionTextResId = quizViewModel.currentQuestionText
@@ -166,21 +192,21 @@ class MainActivity : AppCompatActivity() {
 
         questionTextView.setOnClickListener{
             quizViewModel.moveToNext()
-            checkOnAvaliableButtons()
+            checkAll()
             buildTextView()
             checkOnNPButtons()
         }
 
         nextButton.setOnClickListener{
             quizViewModel.moveToNext()
-            checkOnAvaliableButtons()
+            checkAll()
             buildTextView()
             checkOnNPButtons()
         }
 
         prevButton.setOnClickListener{
             quizViewModel.moveToPrev()
-            checkOnAvaliableButtons()
+            checkAll()
             buildTextView()
             checkOnNPButtons()
         }
@@ -230,5 +256,8 @@ class MainActivity : AppCompatActivity() {
             quizViewModel.isCheated[quizViewModel.currentIndex] =
                 data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
         }
+
+        checkAll()
+
     }
 }
