@@ -1,6 +1,7 @@
 package com.example.secondapp
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
+import org.w3c.dom.Text
 import java.security.KeyStore.TrustedCertificateEntry
 
 private const val TAG = "MainActivity"
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var questionTextView: TextView
     private lateinit var cheatButton: Button
     private lateinit var apiView: TextView
+    private lateinit var cheatInfo: TextView
 
     private var userAnswer = false;
 
@@ -125,6 +128,8 @@ class MainActivity : AppCompatActivity() {
             cheatButton.isEnabled = false
         }
 
+        cheatInfo.text = "Попыток осталось " +  (quizViewModel.allTries - counting).toString() + "/3"
+
     }
 
     private fun checkAll(){
@@ -147,6 +152,7 @@ class MainActivity : AppCompatActivity() {
         questionTextView = findViewById(R.id.question_text_view)
         cheatButton = findViewById(R.id.cheat_button)
         apiView = findViewById(R.id.api_string)
+        cheatInfo = findViewById(R.id.cheat_info)
 
         checkOnAvaliableButtons()
         checkOnNPButtons()
@@ -180,10 +186,16 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        cheatButton.setOnClickListener {
+        cheatButton.setOnClickListener {view ->
             val answerIsTrue = quizViewModel.currentQuestionAnswer
             val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
-            startActivityForResult(intent, REQUEST_CODE_CHEAT)
+            if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val options = ActivityOptions
+                    .makeClipRevealAnimation(view, 0, 0, view.width, view.height)
+                startActivityForResult(intent, REQUEST_CODE_CHEAT, options.toBundle())
+            } else {
+                startActivityForResult(intent, REQUEST_CODE_CHEAT)
+            }
             checkAll()
         }
 
